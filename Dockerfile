@@ -1,11 +1,18 @@
 FROM tutum/apache-php
 
-ENV PIWIK_VERSION 2.13.0
+ENV PIWIK_VERSION 2.14.3
 
 RUN rm -rf /app/*
 RUN curl -L -O http://builds.piwik.org/piwik-${PIWIK_VERSION}.tar.gz && \
     tar --strip 1 -xzf piwik-${PIWIK_VERSION}.tar.gz && \
     rm piwik-${PIWIK_VERSION}.tar.gz
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y php5-geoip php5-dev libgeoip-dev && apt-get clean
+RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN echo "extension=geoip.so" >> /etc/php5/apache2/php.ini
+RUN echo "geoip.custom_directory=/app/misc" >> /etc/php5/apache2/php.ini
+WORKDIR /app/misc
+RUN curl -L -O http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz && gunzip GeoIP.dat.gz
+RUN curl -L -O http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz && gunzip GeoLiteCity.dat.gz && mv GeoLiteCity.dat GeoIPCity.dat
 RUN chmod a+w /app/config
 
 EXPOSE 80
